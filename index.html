@@ -7,331 +7,50 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-      background: #f3f4f6;
-    }
-
-    .sidebar {
-      width: 380px;
-      background: white;
-      box-shadow: 2px 0 8px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
-      z-index: 1000;
-    }
-
-    .header {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      color: white;
-      padding: 24px;
-    }
-
-    .header h1 {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 16px;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .stat-card {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 8px;
-      padding: 12px;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: #bfdbfe;
-      margin-bottom: 4px;
-    }
-
-    .stat-value {
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .alerts {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .alert-badge {
-      background: rgba(239, 68, 68, 0.2);
-      backdrop-filter: blur(10px);
-      border-radius: 6px;
-      padding: 6px 12px;
-      font-size: 13px;
-    }
-
-    .alert-badge.warning {
-      background: rgba(245, 158, 11, 0.2);
-    }
-
-    .vehicle-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-    }
-
-    .vehicle-card {
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .vehicle-card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      transform: translateY(-1px);
-    }
-
-    .vehicle-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .vehicle-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .vehicle-icon {
-      width: 40px;
-      height: 40px;
-      background: #dbeafe;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #2563eb;
-    }
-
-    .vehicle-id {
-      font-weight: 600;
-      font-size: 15px;
-      color: #111827;
-    }
-
-    .status-badge {
-      font-size: 10px;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 12px;
-      border: 1px solid;
-    }
-
-    .status-active {
-      background: #dcfce7;
-      color: #166534;
-      border-color: #bbf7d0;
-    }
-
-    .status-warning {
-      background: #fef3c7;
-      color: #92400e;
-      border-color: #fde68a;
-    }
-
-    .status-critical {
-      background: #fee2e2;
-      color: #991b1b;
-      border-color: #fecaca;
-    }
-
-    .vehicle-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .stat-icon {
-      width: 16px;
-      height: 16px;
-      color: #6b7280;
-    }
-
-    .stat-content {
-      flex: 1;
-    }
-
-    .stat-content label {
-      display: block;
-      font-size: 11px;
-      color: #6b7280;
-      margin-bottom: 2px;
-    }
-
-    .stat-content value {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .timestamp {
-      font-size: 11px;
-      color: #9ca3af;
-      margin-top: 12px;
-      text-align: right;
-    }
-
-    .map-container {
-      flex: 1;
-      position: relative;
-    }
-
-    #map {
-      width: 100%;
-      height: 100%;
-    }
-
-    .loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 48px;
-    }
-
-    .spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid #e5e7eb;
-      border-top-color: #2563eb;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .error {
-      background: #fee2e2;
-      border: 1px solid #fecaca;
-      border-radius: 8px;
-      padding: 16px;
-      display: flex;
-      align-items: start;
-      gap: 12px;
-      margin: 16px;
-    }
-
-    .error-icon {
-      color: #dc2626;
-      flex-shrink: 0;
-    }
-
-    .error-content h3 {
-      color: #991b1b;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .error-content p {
-      color: #b91c1c;
-      font-size: 14px;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 48px 24px;
-      color: #6b7280;
-    }
-
-    .map-controls {
-      position: absolute;
-      bottom: 24px;
-      right: 24px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      overflow: hidden;
-      z-index: 1000;
-    }
-
-    .map-controls button {
-      display: block;
-      width: 40px;
-      height: 40px;
-      border: none;
-      background: white;
-      cursor: pointer;
-      font-size: 20px;
-      font-weight: bold;
-      color: #374151;
-      transition: background 0.2s;
-    }
-
-    .map-controls button:hover {
-      background: #f3f4f6;
-    }
-
-    .map-controls button:first-child {
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .live-indicator {
-      position: absolute;
-      top: 24px;
-      right: 24px;
-      background: white;
-      padding: 12px 16px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      z-index: 1000;
-    }
-
-    .live-dot {
-      width: 8px;
-      height: 8px;
-      background: #10b981;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .live-text {
-      font-size: 14px;
-      font-weight: 500;
-      color: #374151;
-    }
+    /* --- Your existing CSS from previous code --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #f3f4f6; }
+    .sidebar { width: 380px; background: white; box-shadow: 2px 0 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; z-index: 1000; }
+    .header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 24px; }
+    .header h1 { font-size: 24px; font-weight: bold; margin-bottom: 16px; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .stat-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 8px; padding: 12px; }
+    .stat-label { font-size: 11px; color: #bfdbfe; margin-bottom: 4px; }
+    .stat-value { font-size: 24px; font-weight: bold; }
+    .alerts { display: flex; gap: 8px; flex-wrap: wrap; }
+    .alert-badge { background: rgba(239, 68, 68, 0.2); backdrop-filter: blur(10px); border-radius: 6px; padding: 6px 12px; font-size: 13px; }
+    .alert-badge.warning { background: rgba(245, 158, 11, 0.2); }
+    .vehicle-list { flex: 1; overflow-y: auto; padding: 16px; }
+    .vehicle-card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+    .vehicle-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-1px); }
+    .vehicle-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .vehicle-info { display: flex; align-items: center; gap: 8px; }
+    .vehicle-icon { width: 40px; height: 40px; background: #dbeafe; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2563eb; }
+    .vehicle-id { font-weight: 600; font-size: 15px; color: #111827; }
+    .status-badge { font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 12px; border: 1px solid; }
+    .status-active { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .status-warning { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .status-critical { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .vehicle-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat-item { display: flex; align-items: center; gap: 8px; }
+    .stat-icon { width: 16px; height: 16px; color: #6b7280; }
+    .stat-content { flex: 1; }
+    .stat-content label { display: block; font-size: 11px; color: #6b7280; margin-bottom: 2px; }
+    .stat-content value { display: block; font-size: 14px; font-weight: 600; color: #111827; }
+    .timestamp { font-size: 11px; color: #9ca3af; margin-top: 12px; text-align: right; }
+    .map-container { flex: 1; position: relative; }
+    #map { width: 100%; height: 100%; }
+    .loading { display: flex; align-items: center; justify-content: center; padding: 48px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .map-controls { position: absolute; bottom: 24px; right: 24px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); overflow: hidden; z-index: 1000; }
+    .map-controls button { display: block; width: 40px; height: 40px; border: none; background: white; cursor: pointer; font-size: 20px; font-weight: bold; color: #374151; transition: background 0.2s; }
+    .map-controls button:hover { background: #f3f4f6; }
+    .map-controls button:first-child { border-bottom: 1px solid #e5e7eb; }
+    .live-indicator { position: absolute; top: 24px; right: 24px; background: white; padding: 12px 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; z-index: 1000; }
+    .live-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .live-text { font-size: 14px; font-weight: 500; color: #374151; }
   </style>
 </head>
 <body>
@@ -350,10 +69,22 @@
       </div>
       <div class="alerts" id="alerts"></div>
     </div>
+
+    <!-- Vehicle list -->
     <div class="vehicle-list" id="vehicleList">
       <div class="loading">
         <div class="spinner"></div>
       </div>
+    </div>
+
+    <!-- Route controls -->
+    <div style="padding: 16px; border-top: 1px solid #e5e7eb;">
+      <label for="vehicleSelect" style="font-weight: 600; margin-bottom: 4px; display:block;">Select Vehicle:</label>
+      <select id="vehicleSelect" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5db; margin-bottom: 8px;">
+        <option value="">-- Select Vehicle --</option>
+      </select>
+      <button onclick="showRoute()" style="width:100%; padding: 8px; margin-bottom: 4px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;">Show Route</button>
+      <button onclick="optimizeRoute()" style="width:100%; padding: 8px; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer;">Optimize Route</button>
     </div>
   </div>
 
@@ -371,244 +102,162 @@
 
   <script>
     const API_URL = "https://dppzqfg20e.execute-api.ap-south-1.amazonaws.com/prod/vehicles";
-    
+
     let map;
     let markers = {};
     let vehicles = [];
+    let routePolyline = null;
+
+    const destinations = [
+      { lat: 12.975, lon: 77.591 },
+      { lat: 12.972, lon: 77.595 },
+      { lat: 12.969, lon: 77.600 }
+    ];
 
     // Initialize map
     function initMap() {
       map = L.map('map').setView([12.9716, 77.5946], 12);
-      
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19
       }).addTo(map);
     }
 
-    // Create custom icon
+    // Vehicle icon
     function createVehicleIcon(status) {
-      const colors = {
-        active: '#10b981',
-        warning: '#f59e0b',
-        critical: '#ef4444'
-      };
+      const colors = { active:'#10b981', warning:'#f59e0b', critical:'#ef4444' };
       const color = colors[status] || colors.active;
-
       return L.divIcon({
         className: 'custom-marker',
-        html: `
-          <div style="position: relative;">
-            <div style="
-              background: ${color};
-              width: 32px;
-              height: 32px;
-              border-radius: 50%;
-              border: 3px solid white;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            ">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/>
-                <circle cx="6.5" cy="16.5" r="2.5"/>
-                <circle cx="16.5" cy="16.5" r="2.5"/>
-              </svg>
-            </div>
-          </div>
-        `,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32]
+        html: `<div style="position: relative;"><div style="background:${color};width:32px;height:32px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;"></div></div>`,
+        iconSize:[32,32], iconAnchor:[16,32], popupAnchor:[0,-32]
       });
     }
 
-    // Get vehicle status
-    function getStatus(vehicle) {
-      if (vehicle.fuel_percent < 20) return 'critical';
-      if (vehicle.fuel_percent < 40 || vehicle.speed_kmh > 80) return 'warning';
+    function getStatus(vehicle){
+      if(vehicle.fuel_percent<20) return 'critical';
+      if(vehicle.fuel_percent<40 || vehicle.speed_kmh>80) return 'warning';
       return 'active';
     }
 
-    // Update map markers
-    function updateMarkers() {
-      vehicles.forEach(vehicle => {
-        const status = getStatus(vehicle);
-        const position = [vehicle.latitude, vehicle.longitude];
-
-        if (markers[vehicle.vehicle_id]) {
-          markers[vehicle.vehicle_id].setLatLng(position);
-          markers[vehicle.vehicle_id].setIcon(createVehicleIcon(status));
+    // Update markers
+    function updateMarkers(){
+      vehicles.forEach(v=>{
+        const status = getStatus(v);
+        const pos=[v.latitude,v.longitude];
+        if(markers[v.vehicle_id]){
+          markers[v.vehicle_id].setLatLng(pos);
+          markers[v.vehicle_id].setIcon(createVehicleIcon(status));
         } else {
-          const marker = L.marker(position, {
-            icon: createVehicleIcon(status)
-          }).addTo(map);
-
-          marker.bindPopup(`
-            <div style="padding: 8px; min-width: 180px;">
-              <h3 style="font-weight: bold; font-size: 16px; margin-bottom: 8px;">${vehicle.vehicle_id}</h3>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="color: #6b7280;">Speed:</span>
-                <span style="font-weight: 600;">${vehicle.speed_kmh} km/h</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="color: #6b7280;">Fuel:</span>
-                <span style="font-weight: 600;">${vehicle.fuel_percent}%</span>
-              </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span style="color: #6b7280;">Status:</span>
-                <span style="font-weight: 600; text-transform: capitalize; color: ${status === 'active' ? '#10b981' : status === 'warning' ? '#f59e0b' : '#ef4444'}">${status}</span>
-              </div>
-            </div>
-          `);
-
-          markers[vehicle.vehicle_id] = marker;
+          const marker=L.marker(pos,{icon:createVehicleIcon(status)}).addTo(map);
+          markers[v.vehicle_id]=marker;
         }
       });
     }
 
-    // Update vehicle list
-    function updateVehicleList() {
-      const container = document.getElementById('vehicleList');
-      
-      if (vehicles.length === 0) {
-        container.innerHTML = '<div class="empty-state"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 12px;"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg><p>No vehicles found</p></div>';
-        return;
-      }
-
-      container.innerHTML = vehicles.map(vehicle => {
-        const status = getStatus(vehicle);
-        const statusClass = `status-${status}`;
-        
-        return `
-          <div class="vehicle-card" onclick="locateVehicle('${vehicle.vehicle_id}')">
-            <div class="vehicle-header">
-              <div class="vehicle-info">
-                <div class="vehicle-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/>
-                    <circle cx="6.5" cy="16.5" r="2.5"/>
-                    <circle cx="16.5" cy="16.5" r="2.5"/>
-                  </svg>
-                </div>
-                <div class="vehicle-id">${vehicle.vehicle_id}</div>
-              </div>
-              <span class="status-badge ${statusClass}">${status.toUpperCase()}</span>
-            </div>
-            <div class="vehicle-stats">
-              <div class="stat-item">
-                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 6v6l4 2"/>
-                </svg>
-                <div class="stat-content">
-                  <label>Speed</label>
-                  <value>${vehicle.speed_kmh} km/h</value>
-                </div>
-              </div>
-              <div class="stat-item">
-                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 16v-2l3-3h12l3 3v2"/>
-                  <rect x="7" y="16" width="10" height="6" rx="1"/>
-                </svg>
-                <div class="stat-content">
-                  <label>Fuel</label>
-                  <value>${vehicle.fuel_percent}%</value>
-                </div>
-              </div>
-            </div>
-            ${vehicle.timestamp ? `<div class="timestamp">Updated: ${new Date(vehicle.timestamp).toLocaleTimeString()}</div>` : ''}
+    // Vehicle list
+    function updateVehicleList(){
+      const container=document.getElementById('vehicleList');
+      if(vehicles.length===0){ container.innerHTML='<div class="empty-state">No vehicles found</div>'; return; }
+      container.innerHTML=vehicles.map(v=>`
+        <div class="vehicle-card" onclick="locateVehicle('${v.vehicle_id}')">
+          <div class="vehicle-header">
+            <div class="vehicle-info"><div class="vehicle-id">${v.vehicle_id}</div></div>
+            <span class="status-badge status-${getStatus(v)}">${getStatus(v).toUpperCase()}</span>
           </div>
-        `;
-      }).join('');
+          <div class="timestamp">Updated: ${new Date(v.timestamp).toLocaleTimeString()}</div>
+        </div>`).join('');
     }
 
-    // Update statistics
-    function updateStats() {
+    function updateStats(){
       const stats = {
         total: vehicles.length,
-        active: vehicles.filter(v => getStatus(v) === 'active').length,
-        warning: vehicles.filter(v => getStatus(v) === 'warning').length,
-        critical: vehicles.filter(v => getStatus(v) === 'critical').length
+        active: vehicles.filter(v=>getStatus(v)==='active').length,
+        warning: vehicles.filter(v=>getStatus(v)==='warning').length,
+        critical: vehicles.filter(v=>getStatus(v)==='critical').length
       };
-
       document.getElementById('totalVehicles').textContent = stats.total;
       document.getElementById('activeVehicles').textContent = stats.active;
-
-      const alertsContainer = document.getElementById('alerts');
-      alertsContainer.innerHTML = '';
-
-      if (stats.warning > 0) {
-        alertsContainer.innerHTML += `<div class="alert-badge warning">⚠️ ${stats.warning} Warning</div>`;
-      }
-      if (stats.critical > 0) {
-        alertsContainer.innerHTML += `<div class="alert-badge">🚨 ${stats.critical} Critical</div>`;
-      }
     }
 
-    // Fetch vehicles
-    async function fetchVehicles() {
-      try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Failed to fetch vehicles');
-        
-        const data = await response.json();
-        
-        // Deduplicate by vehicle_id
+    function updateVehicleSelect() {
+      const select = document.getElementById('vehicleSelect');
+      select.innerHTML = '<option value="">-- Select Vehicle --</option>';
+      vehicles.forEach(v=>{
+        const option=document.createElement('option');
+        option.value=v.vehicle_id; option.textContent=v.vehicle_id;
+        select.appendChild(option);
+      });
+    }
+
+    async function fetchVehicles(){
+      try{
+        const res = await fetch(API_URL);
+        if(!res.ok) throw new Error('Failed to fetch vehicles');
+        const data = await res.json();
         const vehicleMap = new Map();
-        (data.items || []).forEach(vehicle => {
-          const existing = vehicleMap.get(vehicle.vehicle_id);
-          if (!existing || (vehicle.timestamp && vehicle.timestamp > existing.timestamp)) {
-            vehicleMap.set(vehicle.vehicle_id, vehicle);
-          }
+        (data.items || []).forEach(v=>{
+          const existing = vehicleMap.get(v.vehicle_id);
+          if(!existing || (v.timestamp && v.timestamp>existing.timestamp)) vehicleMap.set(v.vehicle_id,v);
         });
-        
-        vehicles = Array.from(vehicleMap.values());
-        
-        updateVehicleList();
-        updateStats();
-        updateMarkers();
-      } catch (error) {
-        console.error('Error fetching vehicles:', error);
-        document.getElementById('vehicleList').innerHTML = `
-          <div class="error">
-            <svg class="error-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <div class="error-content">
-              <h3>Error Loading Vehicles</h3>
-              <p>${error.message}</p>
-            </div>
-          </div>
-        `;
+        vehicles=Array.from(vehicleMap.values());
+        updateVehicleList(); updateStats(); updateMarkers(); updateVehicleSelect();
+      } catch(e){
+        console.error(e);
       }
     }
 
-    // Locate vehicle on map
-    function locateVehicle(vehicleId) {
-      const vehicle = vehicles.find(v => v.vehicle_id === vehicleId);
-      if (vehicle && markers[vehicleId]) {
-        map.setView([vehicle.latitude, vehicle.longitude], 15);
-        markers[vehicleId].openPopup();
+    function locateVehicle(vehicleId){
+      const v=vehicles.find(v=>v.vehicle_id===vehicleId);
+      if(v && markers[vehicleId]){
+        map.setView([v.latitude,v.longitude],15);
       }
     }
 
-    // Map controls
-    function zoomIn() {
-      map.zoomIn();
+    function zoomIn(){map.zoomIn();}
+    function zoomOut(){map.zoomOut();}
+
+    // --- Route functions ---
+    function drawRoute(coords,color){
+      if(routePolyline) map.removeLayer(routePolyline);
+      routePolyline = L.polyline(coords,{color,weight:5,opacity:0.8}).addTo(map);
+      map.fitBounds(routePolyline.getBounds(),{padding:[50,50]});
     }
 
-    function zoomOut() {
-      map.zoomOut();
+    function showRoute(){
+      const vehicleId=document.getElementById('vehicleSelect').value;
+      if(!vehicleId) return alert("Select a vehicle");
+      const v=vehicles.find(v=>v.vehicle_id===vehicleId);
+      const coords=[[v.latitude,v.longitude],[destinations[0].lat,destinations[0].lon]];
+      drawRoute(coords,'blue');
+    }
+
+    function optimizeRoute(){
+      const vehicleId=document.getElementById('vehicleSelect').value;
+      if(!vehicleId) return alert("Select a vehicle");
+      const v=vehicles.find(v=>v.vehicle_id===vehicleId);
+      const remaining=[...destinations];
+      const routeCoords=[];
+      let current={lat:v.latitude,lon:v.longitude};
+      while(remaining.length>0){
+        remaining.sort((a,b)=>{
+          const da=(a.lat-current.lat)**2 + (a.lon-current.lon)**2;
+          const db=(b.lat-current.lat)**2 + (b.lon-current.lon)**2;
+          return da-db;
+        });
+        const next=remaining.shift();
+        routeCoords.push([next.lat,next.lon]);
+        current=next;
+      }
+      routeCoords.unshift([v.latitude,v.longitude]);
+      drawRoute(routeCoords,'green');
     }
 
     // Initialize
     initMap();
     fetchVehicles();
-    setInterval(fetchVehicles, 5000);
+    setInterval(fetchVehicles,5000);
+
   </script>
 </body>
 </html>
