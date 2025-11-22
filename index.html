@@ -51,6 +51,23 @@
     .live-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     .live-text { font-size: 14px; font-weight: 500; color: #374151; }
+    /* New UI enhancements */
+    .guide-panel { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-bottom:12px; font-size:12px; }
+    .guide-step { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+    .guide-step:last-child { margin-bottom:0; }
+    .step-indicator { width:16px; height:16px; border-radius:50%; background:#cbd5e1; font-size:10px; font-weight:600; display:flex; align-items:center; justify-content:center; color:#334155; }
+    .step-active .step-indicator { background:#2563eb; color:white; }
+    .step-done .step-indicator { background:#10b981; color:white; }
+    .route-buttons button { position:relative; }
+    .route-buttons button:hover { filter:brightness(1.08); box-shadow:0 2px 6px rgba(0,0,0,0.12); }
+    .route-buttons button:active { transform:scale(0.97); }
+    .route-buttons button.active-mode { outline:2px solid #fbbf24; }
+    .live-toggle { margin-top:8px; padding:6px 10px; background:#0d9488; color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; }
+    .live-toggle.off { background:#64748b; }
+    .fit-btn { padding:6px 10px; background:#9333ea; color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; margin-top:8px; }
+    .fit-btn:hover { filter:brightness(1.1); }
+    .standard-route-style { stroke-dasharray:8 6; }
+    .optimized-route-style { filter:drop-shadow(0 0 4px rgba(16,185,129,0.5)); }
   </style>
 </head>
 <body>
@@ -79,12 +96,36 @@
 
     <!-- Route controls -->
     <div style="padding: 16px; border-top: 1px solid #e5e7eb;">
-      <label for="vehicleSelect" style="font-weight: 600; margin-bottom: 4px; display:block;">Select Vehicle:</label>
-      <select id="vehicleSelect" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5db; margin-bottom: 8px;">
+      <div class="guide-panel" id="guidePanel">
+        <div class="guide-step" id="step-source"><div class="step-indicator">1</div><div>Set <strong>Source</strong> (click map)</div></div>
+        <div class="guide-step" id="step-destination"><div class="step-indicator">2</div><div>Set <strong>Destination</strong> (click map)</div></div>
+        <div class="guide-step" id="step-waypoints"><div class="step-indicator">3</div><div>Add optional <strong>Waypoints</strong></div></div>
+        <div class="guide-step" id="step-standard"><div class="step-indicator">4</div><div>Draw <strong>Standard Route</strong></div></div>
+        <div class="guide-step" id="step-optimized"><div class="step-indicator">5</div><div>Generate <strong>Optimized Route</strong></div></div>
+      </div>
+      <label for="vehicleSelect" style="font-weight:600; margin-bottom:4px; display:block;">Track Vehicle:</label>
+      <select id="vehicleSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #d1d5db; margin-bottom:12px;">
         <option value="">-- Select Vehicle --</option>
       </select>
-      <button onclick="showRoute()" style="width:100%; padding: 8px; margin-bottom: 4px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;">Show Route</button>
-      <button onclick="optimizeRoute()" style="width:100%; padding: 8px; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer;">Optimize Route</button>
+      <div class="route-buttons" style="display:grid; gap:8px; margin-bottom:12px;">
+        <button id="setSourceBtn" onclick="activateSetMode('source')" style="padding:8px; background:#1d4ed8; color:white; border:none; border-radius:6px; cursor:pointer;">1. Set Source</button>
+        <button id="setDestBtn" onclick="activateSetMode('destination')" style="padding:8px; background:#1d4ed8; color:white; border:none; border-radius:6px; cursor:pointer;" disabled>2. Set Destination</button>
+        <button id="addWaypointBtn" onclick="activateSetMode('waypoint')" style="padding:8px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;" disabled>3. Add Waypoint</button>
+        <button id="drawStandardBtn" onclick="requestStandardRoute()" style="padding:8px; background:#374151; color:white; border:none; border-radius:6px; cursor:pointer;" disabled>4. Standard Route</button>
+        <button id="optimizeBtn" onclick="optimizeRoute()" style="padding:8px; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer;" disabled>5. Optimize Route</button>
+        <button onclick="clearRoute()" style="padding:8px; background:#dc2626; color:white; border:none; border-radius:6px; cursor:pointer;">Clear Route</button>
+        <button class="fit-btn" onclick="fitVehicles()">Fit Vehicles</button>
+        <button id="liveToggle" class="live-toggle" onclick="toggleLiveUpdates()">Live Updates: ON</button>
+      </div>
+      <div style="background:#f3f4f6; padding:8px; border-radius:6px; font-size:12px; line-height:1.4;">
+        <strong>Route Status:</strong>
+        <div id="routeStatus">No route defined.</div>
+        <div style="margin-top:6px;">
+          <span style="display:inline-block; width:10px; height:10px; background:#1d4ed8; border-radius:50%;"></span> Source
+          <span style="display:inline-block; width:10px; height:10px; background:#ef4444; border-radius:50%; margin-left:12px;"></span> Destination
+          <span style="display:inline-block; width:10px; height:10px; background:#fb923c; border-radius:50%; margin-left:12px;"></span> Waypoint
+        </div>
+      </div>
     </div>
   </div>
 
@@ -107,6 +148,19 @@
     let markers = {};
     let vehicles = [];
     let routePolyline = null;
+    let sourcePoint = null;
+    let destinationPoint = null;
+    let waypointPoints = [];
+    let setMode = null; // 'source' | 'destination' | 'waypoint' | null
+    let tempMarkers = []; // markers for source/dest/waypoints
+    let selectedVehicleId = '';
+    const OSRM_BASE = 'https://router.project-osrm.org';
+    let liveEnabled = true;
+    let refreshInterval = 10000;
+    let intervalHandle = null;
+    let standardDetour = null;
+    let lastStandardDistance = null;
+    let lastOptimizedDistance = null;
 
     const destinations = [
       { lat: 12.975, lon: 77.591 },
@@ -218,45 +272,212 @@
     function zoomOut(){map.zoomOut();}
 
     // --- Route functions ---
-    function drawRoute(coords,color){
+    function drawRoute(coords,color,optimized=false){
       if(routePolyline) map.removeLayer(routePolyline);
-      routePolyline = L.polyline(coords,{color,weight:5,opacity:0.8}).addTo(map);
+      const style = { color, weight: optimized?7:5, opacity:0.85 };
+      if(!optimized) style.dashArray = '8 6';
+      routePolyline = L.polyline(coords, style).addTo(map);
       map.fitBounds(routePolyline.getBounds(),{padding:[50,50]});
     }
 
-    function showRoute(){
-      const vehicleId=document.getElementById('vehicleSelect').value;
-      if(!vehicleId) return alert("Select a vehicle");
-      const v=vehicles.find(v=>v.vehicle_id===vehicleId);
-      const coords=[[v.latitude,v.longitude],[destinations[0].lat,destinations[0].lon]];
-      drawRoute(coords,'blue');
+    function updateGuideSteps(){
+      const setState = (id,state)=>{
+        const el=document.getElementById(id);
+        el.classList.remove('step-active','step-done');
+        if(state==='active') el.classList.add('step-active');
+        if(state==='done') el.classList.add('step-done');
+      };
+      setState('step-source', sourcePoint?'done': (setMode==='source'?'active':null));
+      setState('step-destination', destinationPoint?'done': (setMode==='destination'?'active':null));
+      setState('step-waypoints', waypointPoints.length>0?'done': (setMode==='waypoint'?'active':null));
+      setState('step-standard', routePolyline && !routePolyline.options.dashArray? 'done': null);
+      setState('step-optimized', routePolyline && !routePolyline.options.dashArray && routePolyline.options.weight===7? 'done': null);
+    }
+
+    function fitVehicles(){
+      const ids = Object.keys(markers);
+      if(!ids.length) return;
+      const group = L.featureGroup(ids.map(id=>markers[id]));
+      map.fitBounds(group.getBounds(),{padding:[40,40]});
+    }
+
+    function activateSetMode(mode){
+      setMode = mode;
+      const statusMap = { source:'Click on map to set SOURCE', destination:'Click on map to set DESTINATION', waypoint:'Click to add WAYPOINT' };
+      document.getElementById('routeStatus').textContent = statusMap[mode] || 'No route defined.';
+      highlightActiveButton();
+      updateGuideSteps();
+    }
+
+    function highlightActiveButton(){
+      ['setSourceBtn','setDestBtn','addWaypointBtn'].forEach(id=>document.getElementById(id).classList.remove('active-mode'));
+      if(setMode==='source') document.getElementById('setSourceBtn').classList.add('active-mode');
+      if(setMode==='destination') document.getElementById('setDestBtn').classList.add('active-mode');
+      if(setMode==='waypoint') document.getElementById('addWaypointBtn').classList.add('active-mode');
+    }
+
+    function addTempMarker(lat, lon, type){
+      const colorMap = { source:'#1d4ed8', destination:'#ef4444', waypoint:'#fb923c' };
+      const marker = L.circleMarker([lat, lon], { radius:8, color:colorMap[type], fillColor:colorMap[type], fillOpacity:0.9 });
+      marker.addTo(map);
+      tempMarkers.push(marker);
+    }
+
+    function clearRoute(){
+      if(routePolyline) { map.removeLayer(routePolyline); routePolyline=null; }
+      tempMarkers.forEach(m=>map.removeLayer(m));
+      tempMarkers=[]; sourcePoint=null; destinationPoint=null; waypointPoints=[]; setMode=null;
+      document.getElementById('routeStatus').textContent='Route cleared.';
+      enableDisableButtons();
+      updateGuideSteps();
+    }
+
+    function requestStandardRoute(){
+      if(!sourcePoint || !destinationPoint){
+        return alert('Set both source and destination first.');
+      }
+      // Build original order, inject artificial detour if no waypoints to ensure longer path
+      let coords = [sourcePoint, ...waypointPoints, destinationPoint];
+      if(waypointPoints.length===0){
+        // Create perpendicular offset detour
+        const sx = sourcePoint[1], sy = sourcePoint[0];
+        const dx = destinationPoint[1], dy = destinationPoint[0];
+        const midLat = (sy+dy)/2; const midLon=(sx+dx)/2;
+        const vx = dx - sx; const vy = dy - sy;
+        const length = Math.max(Math.sqrt(vx*vx+vy*vy), 0.0001);
+        const scale = 0.01; // detour magnitude
+        // Perpendicular vector
+        const px = -vy/length * scale; const py = vx/length * scale;
+        standardDetour = [midLat+py, midLon+px];
+        addTempMarker(standardDetour[0], standardDetour[1], 'waypoint');
+        coords = [sourcePoint, standardDetour, destinationPoint];
+      } else {
+        standardDetour = null;
+      }
+      requestOsrmRoute(coords, 'blue', false);
     }
 
     function optimizeRoute(){
-      const vehicleId=document.getElementById('vehicleSelect').value;
-      if(!vehicleId) return alert("Select a vehicle");
-      const v=vehicles.find(v=>v.vehicle_id===vehicleId);
-      const remaining=[...destinations];
-      const routeCoords=[];
-      let current={lat:v.latitude,lon:v.longitude};
-      while(remaining.length>0){
+      if(!sourcePoint || !destinationPoint){
+        return alert('Set source and destination first.');
+      }
+      // Exclude artificial detour from optimization
+      const effectiveWaypoints = waypointPoints.filter(p=>!standardDetour || (p[0]!==standardDetour[0] || p[1]!==standardDetour[1]));
+      const remaining = [...effectiveWaypoints];
+      let current = sourcePoint;
+      const ordered = [];
+      while(remaining.length){
         remaining.sort((a,b)=>{
-          const da=(a.lat-current.lat)**2 + (a.lon-current.lon)**2;
-          const db=(b.lat-current.lat)**2 + (b.lon-current.lon)**2;
+          const da = (a[0]-current[0])**2 + (a[1]-current[1])**2;
+          const db = (b[0]-current[0])**2 + (b[1]-current[1])**2;
           return da-db;
         });
-        const next=remaining.shift();
-        routeCoords.push([next.lat,next.lon]);
-        current=next;
+        const next = remaining.shift();
+        ordered.push(next);
+        current = next;
       }
-      routeCoords.unshift([v.latitude,v.longitude]);
-      drawRoute(routeCoords,'green');
+      let path = [sourcePoint, ...ordered, destinationPoint];
+      path = twoOpt(path);
+      requestOsrmRoute(path, '#059669', true);
+      document.getElementById('routeStatus').textContent='Optimized route drawn.';
+    }
+
+    function twoOpt(points){
+      // Keep endpoints fixed
+      if(points.length <= 3) return points;
+      let improved = true;
+      const dist = (a,b)=> (a[0]-b[0])**2 + (a[1]-b[1])**2; // squared dist ok for comparison
+      while(improved){
+        improved = false;
+        for(let i=1;i<points.length-2;i++){
+          for(let k=i+1;k<points.length-1;k++){
+            const A=points[i-1], B=points[i], C=points[k], D=points[k+1];
+            const currentDist = dist(A,B)+dist(C,D);
+            const newDist = dist(A,C)+dist(B,D);
+            if(newDist < currentDist){
+              const reversed = points.slice(i,k+1).reverse();
+              points = [...points.slice(0,i), ...reversed, ...points.slice(k+1)];
+              improved = true;
+            }
+          }
+        }
+      }
+      return points;
+    }
+
+    async function requestOsrmRoute(latLonPairs, color, optimized){
+      try {
+        const coordsStr = latLonPairs.map(p=>`${p[1]},${p[0]}`).join(';');
+        document.getElementById('routeStatus').textContent='Routing...';
+        const url = `${OSRM_BASE}/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('OSRM request failed');
+        const data = await res.json();
+        if(!data.routes || !data.routes.length) throw new Error('No route found');
+        const routeCoords = data.routes[0].geometry.coordinates.map(c=>[c[1], c[0]]);
+        drawRoute(routeCoords, color, optimized);
+        const distKm = (data.routes[0].distance/1000).toFixed(2);
+        const durMin = (data.routes[0].duration/60).toFixed(1);
+        if(!optimized){
+          lastStandardDistance = parseFloat(distKm);
+        } else {
+          lastOptimizedDistance = parseFloat(distKm);
+        }
+        let improvementMsg='';
+        if(lastStandardDistance!==null && lastOptimizedDistance!==null){
+          const diff = lastStandardDistance - lastOptimizedDistance;
+          const pct = ((diff/lastStandardDistance)*100).toFixed(1);
+          improvementMsg = ` | Saved: ${diff.toFixed(2)} km (${pct}%)`;
+        }
+        document.getElementById('routeStatus').textContent=`Route: ${distKm} km, ${durMin} min (${optimized?'Optimized':'Standard'})${improvementMsg}`;
+        enableDisableButtons();
+        updateGuideSteps();
+      } catch(e){
+        console.error(e);
+        document.getElementById('routeStatus').textContent='Routing error.';
+        alert('Routing failed: '+e.message);
+      }
+    }
+
+    function enableDisableButtons(){
+      document.getElementById('setDestBtn').disabled = !sourcePoint;
+      document.getElementById('addWaypointBtn').disabled = !sourcePoint || !destinationPoint;
+      document.getElementById('drawStandardBtn').disabled = !sourcePoint || !destinationPoint;
+      document.getElementById('optimizeBtn').disabled = !sourcePoint || !destinationPoint;
+    }
+
+    function toggleLiveUpdates(){
+      liveEnabled = !liveEnabled;
+      const btn = document.getElementById('liveToggle');
+      btn.textContent = `Live Updates: ${liveEnabled? 'ON':'OFF'}`;
+      btn.classList.toggle('off', !liveEnabled);
+      if(liveEnabled){ startLiveInterval(); } else { clearInterval(intervalHandle); intervalHandle=null; }
+    }
+
+    function startLiveInterval(){
+      if(intervalHandle) clearInterval(intervalHandle);
+      intervalHandle = setInterval(()=>{ if(liveEnabled && !setMode) fetchVehicles(); }, refreshInterval);
     }
 
     // Initialize
     initMap();
     fetchVehicles();
-    setInterval(fetchVehicles,5000);
+    startLiveInterval();
+    map.on('click', e => {
+      if(!setMode) return;
+      const { lat, lng } = e.latlng;
+      if(setMode==='source') { sourcePoint=[lat,lng]; addTempMarker(lat,lng,'source'); }
+      else if(setMode==='destination') { destinationPoint=[lat,lng]; addTempMarker(lat,lng,'destination'); }
+      else if(setMode==='waypoint') { waypointPoints.push([lat,lng]); addTempMarker(lat,lng,'waypoint'); }
+      setMode=null;
+      document.getElementById('routeStatus').textContent='Points ready. Draw or optimize route.';
+      enableDisableButtons();
+      highlightActiveButton();
+      updateGuideSteps();
+    });
+    document.getElementById('vehicleSelect').addEventListener('change', e => { selectedVehicleId = e.target.value; });
+    enableDisableButtons();
+    updateGuideSteps();
 
   </script>
 </body>
