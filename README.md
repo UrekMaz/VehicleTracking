@@ -69,5 +69,3 @@ Do this by sending waypoint list & constraints to Gemini and merging response be
 - `simul.py` – Vehicle telemetry simulator.
 - `lambda_optimize.py` – Sample AWS Lambda route optimization stub.
 
-## License
-Internal / Hacktoberfest demo. Add a license file if distributing.
