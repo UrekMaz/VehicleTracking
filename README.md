@@ -36,7 +36,7 @@ python3 simul.py
 5. Click "Optimize Route" to reorder waypoints for shorter travel (heuristic).
 6. Review distance & ETA summary in Route Status box.
 
-## AWS Lambda Integration (Planned)
+## AWS Lambda Integration 
 Deploy `lambda_optimize.py` behind API Gateway. Front-end can POST:
 ```json
 {
